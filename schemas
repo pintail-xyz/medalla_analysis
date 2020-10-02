@@ -1,0 +1,48 @@
+                   Table "public.t_attestations"
+          Column         |  Type  | Collation | Nullable | Default 
+ ------------------------+--------+-----------+----------+---------
+  f_inclusion_slot       | bigint |           | not null | 
+  f_inclusion_block_root | bytea  |           | not null | 
+  f_inclusion_index      | bigint |           | not null | 
+  f_slot                 | bigint |           | not null | 
+  f_committee_index      | bigint |           | not null | 
+  f_aggregation_bits     | bytea  |           | not null | 
+  f_beacon_block_root    | bytea  |           | not null | 
+  f_source_epoch         | bigint |           | not null | 
+  f_source_root          | bytea  |           | not null | 
+  f_target_epoch         | bigint |           | not null | 
+  f_target_root          | bytea  |           | not null | 
+
+                         Table "public.t_validators"
+              Column             |  Type   | Collation | Nullable | Default 
+ --------------------------------+---------+-----------+----------+---------
+  f_public_key                   | bytea   |           | not null | 
+  f_index                        | bigint  |           | not null | 
+  f_slashed                      | boolean |           | not null | 
+  f_activation_eligibility_epoch | bigint  |           | not null | 
+  f_activation_epoch             | bigint  |           | not null | 
+  f_exit_epoch                   | bigint  |           | not null | 
+  f_withdrawable_epoch           | bigint  |           | not null | 
+  f_effective_balance            | bigint  |           | not null | 
+
+            Table "public.t_beacon_committees"
+    Column    |   Type   | Collation | Nullable | Default 
+ -------------+----------+-----------+----------+---------
+  f_slot      | bigint   |           | not null | 
+  f_index     | bigint   |           | not null | 
+  f_committee | bigint[] |           | not null | 
+
+                     Table "public.t_blocks"
+         Column        |  Type  | Collation | Nullable | Default 
+ ----------------------+--------+-----------+----------+---------
+  f_slot               | bigint |           | not null | 
+  f_proposer_index     | bigint |           | not null | 
+  f_root               | bytea  |           | not null | 
+  f_graffiti           | bytea  |           | not null | 
+  f_randao_reveal      | bytea  |           | not null | 
+  f_body_root          | bytea  |           | not null | 
+  f_parent_root        | bytea  |           | not null | 
+  f_state_root         | bytea  |           | not null | 
+  f_eth1_block_hash    | bytea  |           | not null | 
+  f_eth1_deposit_count | bigint |           | not null | 
+  f_eth1_deposit_root  | bytea  |           | not null | 
