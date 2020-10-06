@@ -9,7 +9,7 @@ def attestation_performance(cursor, slot):
     result = cursor.fetchall()
     # committee_lookup is a list of committees (themselves lists of validator indices) for this slot
     committee_lookup = [result[committee_index][0] for committee_index in range(len(result))]
-    query = f"""SELECT f_committee_index, f_inclusion_slot, f_aggregation_bits
+    query = f"""SELECT f_committee_index, f_inclusion_slot, f_aggregation_bits, f_beacon_block_root
                 FROM t_attestations
                 WHERE f_slot = {slot}
                 ORDER BY f_inclusion_slot"""
@@ -19,6 +19,10 @@ def attestation_performance(cursor, slot):
     committee_performance = [[-1] * len(committee_lookup[committee_index])
                              for committee_index in range(len(committee_lookup))]
     for attestation in attestations:
+        beacon_root = attestation[3].hex()
+        cursor.execute(f"SELECT f_canonical FROM t_blocks WHERE f_root = '\\x{beacon_root}'")
+        if not cursor.fetchone():
+    	    continue
         committee_index = attestation[0]
         committee_size = len(committee_lookup[committee_index])
         inclusion_slot = attestation[1]

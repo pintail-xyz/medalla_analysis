@@ -46,3 +46,12 @@
   f_eth1_block_hash    | bytea  |           | not null | 
   f_eth1_deposit_count | bigint |           | not null | 
   f_eth1_deposit_root  | bytea  |           | not null | 
+  
+                Table "public.t_validator_balances"
+       Column        |  Type  | Collation | Nullable | Default 
+---------------------+--------+-----------+----------+---------
+ f_validator_index   | bigint |           | not null | 
+ f_epoch             | bigint |           | not null | 
+ f_balance           | bigint |           | not null | 
+ f_effective_balance | bigint |           | not null | 
+
