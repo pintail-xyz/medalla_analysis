@@ -9,7 +9,7 @@ def attestation_performance(cursor, slot):
     result = cursor.fetchall()
     # committee_lookup is a list of committees (themselves lists of validator indices) for this slot
     committee_lookup = [result[committee_index][0] for committee_index in range(len(result))]
-    query = f"""SELECT f_committee_index, f_inclusion_slot, f_aggregation_bits, f_beacon_block_root
+    query = f"""SELECT f_committee_index, f_inclusion_slot, f_aggregation_bits, f_inclusion_block_root
                 FROM t_attestations
                 WHERE f_slot = {slot}
                 ORDER BY f_inclusion_slot"""
@@ -19,18 +19,21 @@ def attestation_performance(cursor, slot):
     committee_performance = [[-1] * len(committee_lookup[committee_index])
                              for committee_index in range(len(committee_lookup))]
     for attestation in attestations:
-        beacon_root = attestation[3].hex()
-        cursor.execute(f"SELECT f_canonical FROM t_blocks WHERE f_root = '\\x{beacon_root}'")
-        if not cursor.fetchone():
-    	    continue
         committee_index = attestation[0]
         committee_size = len(committee_lookup[committee_index])
         inclusion_slot = attestation[1]
-        inclusion_distance = inclusion_slot - slot - 1
         # to get the aggregation bits in correct order, reverse order of the bytes and then reverse whole bitlist
         # also exclude any bits that were added as padding by the .tobytes() method
         aggregation_bits = bitlist(attestation[2].tobytes()[::-1])[:-(committee_size+1):-1]
-        
+        inclusion_root = attestation[3].hex()
+        cursor.execute(f"SELECT f_canonical FROM t_blocks WHERE f_root = '\\x{inclusion_root}'")
+        canonical = cursor.fetchone()[0]
+        if not canonical:
+            # print(f"skipping attestation from non-canonical block in slot {inclusion_slot}")
+            continue
+
+        inclusion_distance = inclusion_slot - slot - 1
+
         # record the shortest inclusion_distance for each member
         for committee_position, bit in enumerate(aggregation_bits):
             if bit and (committee_performance[committee_index][committee_position] == -1):
@@ -40,7 +43,17 @@ def attestation_performance(cursor, slot):
     validators  = [validator for committee in committee_lookup for validator in committee]
     performance = [inclusion_distance for committee in committee_performance for inclusion_distance in committee]
     
-    return dict(zip(validators, performance))
+    cursor.execute(f"SELECT f_slot FROM t_blocks WHERE f_slot > {slot} AND f_canonical = true ORDER BY f_slot LIMIT 1")
+    earliest_inclusion_slot = cursor.fetchone()[0]
+    min_inclusion_distance = earliest_inclusion_slot - slot - 1
+    
+    #for d in performance:
+    #    if 1 + d - min_inclusion_distance == 0 and d != -1:
+    #        print(slot, earliest_inclusion_slot, d, min_inclusion_distance)
+    
+    effectiveness = [0 if d == -1 else 1 / (1 + d - min_inclusion_distance) for d in performance]
+    
+    return dict(zip(validators, performance)), dict(zip(validators, effectiveness))
     
 # function for calculating the distribution of outages - not required as no outages after block 5000
 def outage_distribution(participation_rate_history, min_participation=2/3):
